@@ -12,13 +12,18 @@ import (
 )
 
 type Config struct {
-	Endpoint      string
-	Port          string
-	Method        string
-	RepoDir       string
-	RepoBranch    string
-	RepoRunScript string
-	RepoSecret    string
+	Endpoint        string
+	Port            string
+	Method          string
+	RepoDir         string
+	RepoBranch      string
+	RepoBranchCheck bool
+	RepoRunScript   string
+	RepoSecret      string
+}
+
+type GitRes struct {
+	ref string
 }
 
 func main() {
@@ -49,8 +54,24 @@ func main() {
 
 	http.HandleFunc("/"+conf.Endpoint, func(res http.ResponseWriter, req *http.Request) {
 		if req.Method == conf.Method {
-			fmt.Println(req.FormValue("ref"))
-			if req.FormValue("ref") == "refs/heads/"+conf.RepoBranch {
+			var git GitRes
+
+			if conf.RepoBranchCheck {
+				reqBody, err := ioutil.ReadAll(req.Body)
+				if err != nil {
+					fmt.Println("Failed to read request body: ", err)
+					fmt.Fprintf(res, "Failed to verify branch")
+					return
+				}
+				err = json.Unmarshal(reqBody, &git)
+				if err != nil {
+					fmt.Println("Failed to parse request body: ", err)
+					fmt.Fprintf(res, "Failed to verify branch")
+					return
+				}
+			}
+
+			if !conf.RepoBranchCheck || git.ref == "refs/heads/"+conf.RepoBranch {
 				for !cmd.ProcessState.Exited() {
 					err = cmd.Process.Signal(syscall.SIGINT)
 					if err != nil {
