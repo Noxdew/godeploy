@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"os/exec"
+	"syscall"
 	"time"
 )
 
@@ -35,16 +37,35 @@ func main() {
 		return
 	}
 
+	var command = "cd " + conf.RepoDir + " && git checkout " + conf.RepoBranch + " && git pull && " + conf.RepoRunScript
+
+	var cmd = exec.Command("sh", "-c", command)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err = cmd.Run()
+	if err != nil {
+		fmt.Println(err)
+	}
+
 	http.HandleFunc("/"+conf.Endpoint, func(res http.ResponseWriter, req *http.Request) {
 		if req.Method == conf.Method {
 			fmt.Println(req.FormValue("ref"))
 			if req.FormValue("ref") == "refs/heads/"+conf.RepoBranch {
-				out, err := exec.Command("cd " + conf.RepoDir + " && git checkout " + conf.RepoBranch + " && git pull && " + conf.RepoRunScript).Output()
+				for !cmd.ProcessState.Exited() {
+					err = cmd.Process.Signal(syscall.SIGINT)
+					if err != nil {
+						fmt.Println(err)
+					}
+				}
+				cmd = exec.Command("sh", "-c", command)
+				cmd.Stdout = os.Stdout
+				cmd.Stderr = os.Stderr
+				err = cmd.Run()
 				if err != nil {
 					fmt.Println(err)
 				}
-				fmt.Printf("Output from deployment script: %s\n", out)
 			}
+			fmt.Fprintf(res, "Done")
 		}
 	})
 
