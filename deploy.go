@@ -42,7 +42,7 @@ func main() {
 	var cmd = exec.Command("sh", "-c", command)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	err = cmd.Run()
+	err = cmd.Start()
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -60,12 +60,14 @@ func main() {
 				cmd = exec.Command("sh", "-c", command)
 				cmd.Stdout = os.Stdout
 				cmd.Stderr = os.Stderr
-				err = cmd.Run()
+				err = cmd.Start()
 				if err != nil {
 					fmt.Println(err)
 				}
 			}
 			fmt.Fprintf(res, "Done")
+		} else {
+			fmt.Println("Received ", req.Method, " request on the deployment endpoint")
 		}
 	})
 
@@ -75,5 +77,6 @@ func main() {
 		WriteTimeout:   30 * time.Second,
 		MaxHeaderBytes: 1 << 20,
 	}
+	fmt.Println("Listening on port ", conf.Port, " for deployment requests")
 	fmt.Println(s.ListenAndServe())
 }
