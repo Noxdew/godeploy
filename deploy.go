@@ -97,24 +97,29 @@ func main() {
 			}
 
 			if !conf.RepoBranchCheck || git.Ref == "refs/heads/"+conf.RepoBranch {
-				if !conf.ScriptAlwaysWait {
-					err = cmd.Process.Signal(os.Interrupt)
-					if err != nil {
-						fmt.Println(err)
-					}
-				}
-				ps, err := cmd.Process.Wait()
-				if err != nil {
-					fmt.Println(err)
-				}
-				if ps != nil && ps.Exited() {
-					fmt.Println("Process exited")
-				} else {
-					fmt.Println("Process almost finished or no process state")
-				}
 				select {
 				default:
 					fmt.Println("Process still running")
+					if !conf.ScriptAlwaysWait {
+						err = cmd.Process.Signal(os.Interrupt)
+						if err != nil {
+							fmt.Println(err)
+						}
+					}
+					ps, err := cmd.Process.Wait()
+					if err != nil {
+						fmt.Println(err)
+					}
+					if ps != nil && ps.Exited() {
+						fmt.Println("Process exited")
+					} else {
+						fmt.Println("Process almost finished or no process state")
+					}
+					if err = <-errChan; err != nil {
+						fmt.Printf("Process exited: %s", err)
+					} else {
+						fmt.Println("Process exited without error")
+					}
 				case e := <-errChan:
 					if e != nil {
 						fmt.Printf("Process exited: %s", e)
