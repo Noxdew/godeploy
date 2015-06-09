@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -77,7 +78,7 @@ func main() {
 	}()
 
 	http.HandleFunc("/"+conf.ServerEndpoint, func(res http.ResponseWriter, req *http.Request) {
-		if req.Method == conf.ServerMethod {
+		if strings.EqualFold(req.Method, conf.ServerMethod) {
 			var git GitRes
 
 			if conf.RepoBranchCheck {
