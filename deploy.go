@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
-	"syscall"
 	"time"
 )
 
@@ -82,22 +81,30 @@ func main() {
 			}
 
 			if !conf.RepoBranchCheck || git.Ref == "refs/heads/"+conf.RepoBranch {
-				for !cmd.ProcessState.Exited() {
-					err = cmd.Process.Signal(syscall.SIGINT)
-					if err != nil {
-						fmt.Println(err)
-					}
-					select {
-					default:
-						fmt.Println("process still running")
-					case e := <-errChan:
-						if e != nil {
-							fmt.Printf("process exited: %s\n", e)
-						} else {
-							fmt.Println("process exited without error")
-						}
+				err = cmd.Process.Kill()
+				if err != nil {
+					fmt.Println(err)
+				}
+				ps, err := cmd.Process.Wait()
+				if err != nil {
+					fmt.Println(err)
+				}
+				if ps != nil && ps.Exited() {
+					fmt.Println("Process exited")
+				} else {
+					fmt.Println("Process still running")
+				}
+				select {
+				default:
+					fmt.Println("Process still running")
+				case e := <-errChan:
+					if e != nil {
+						fmt.Printf("Process exited: %s", e)
+					} else {
+						fmt.Println("Process exited without error")
 					}
 				}
+
 				cmd = exec.Command("sh", "-c", command)
 				cmd.Stdout = os.Stdout
 				cmd.Stderr = os.Stderr
