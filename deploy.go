@@ -18,6 +18,7 @@ type Config struct {
 	ServerMethod     string
 	RepoDir          string
 	RepoBranch       string
+	RepoBuildScript    string
 	RepoRunScript    string
 	RepoSecret       string
 	RepoBranchCheck  bool
@@ -51,6 +52,7 @@ func main() {
 	}
 
 	var updateCommand = "cd " + conf.RepoDir + " && git checkout " + conf.RepoBranch + " && git pull"
+	var buildCommand = filepath.Clean(conf.ScriptDir + "/" + conf.RepoBuildScript)
 	var command = filepath.Clean(conf.ScriptDir + "/" + conf.RepoRunScript)
 	var errChan = make(chan error)
 
@@ -62,6 +64,14 @@ func main() {
 	}
 
 	var cmd = exec.Command("sh", "-c", updateCommand)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err = cmd.Run()
+	if err != nil {
+		fmt.Println("Failed to update the repository", err)
+	}
+
+	cmd = exec.Command(buildCommand)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	err = cmd.Run()
@@ -129,6 +139,14 @@ func main() {
 				}
 
 				cmd = exec.Command("sh", "-c", updateCommand)
+				cmd.Stdout = os.Stdout
+				cmd.Stderr = os.Stderr
+				err = cmd.Run()
+				if err != nil {
+					fmt.Println("Failed to update the repository", err)
+				}
+
+				cmd = exec.Command(buildCommand)
 				cmd.Stdout = os.Stdout
 				cmd.Stderr = os.Stderr
 				err = cmd.Run()
