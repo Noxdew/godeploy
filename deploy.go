@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/kardianos/osext"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -33,10 +34,18 @@ type GitRes struct {
 
 func main() {
 
-	configFile, err := ioutil.ReadFile("godeploy.conf")
+	execFolder, err := osext.ExecutableFolder()
 	if err != nil {
-		fmt.Println("GoDeploy: Failed to find the godeploy.conf: ", err)
-		return
+		fmt.Println("GoDeploy: Failed to get the executable path")
+	}
+	configFile, err := ioutil.ReadFile(filepath.Clean(execFolder + "/" + "godeploy.conf"))
+	if err != nil {
+		fmt.Println("GoDeploy: Failed to find the godeploy.conf (trying again): ", err)
+		configFile, err = ioutil.ReadFile("godeploy.conf")
+		if err != nil {
+			fmt.Println("GoDeploy: Failed to find the godeploy.conf: ", err)
+			return
+		}
 	}
 
 	var conf Config
