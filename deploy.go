@@ -35,7 +35,7 @@ func main() {
 
 	configFile, err := ioutil.ReadFile("godeploy.conf")
 	if err != nil {
-		fmt.Println("Failed to find the godeploy.conf: ", err)
+		fmt.Println("GoDeploy: Failed to find the godeploy.conf: ", err)
 		return
 	}
 
@@ -43,7 +43,7 @@ func main() {
 
 	err = json.Unmarshal(configFile, &conf)
 	if err != nil {
-		fmt.Println("Failed to parse godeploy.conf: ", err)
+		fmt.Println("GoDeploy: Failed to parse godeploy.conf: ", err)
 		return
 	}
 
@@ -68,7 +68,7 @@ func main() {
 	cmd.Stderr = os.Stderr
 	err = cmd.Run()
 	if err != nil {
-		fmt.Println("Failed to update the repository", err)
+		fmt.Println("GoDeploy: Failed to update the repository", err)
 	}
 
 	cmd = exec.Command(buildCommand[0], buildCommand[1:]...)
@@ -76,7 +76,7 @@ func main() {
 	cmd.Stderr = os.Stderr
 	err = cmd.Run()
 	if err != nil {
-		fmt.Println("Failed to update the repository", err)
+		fmt.Println("GoDeploy: Failed to build the project", err)
 	}
 
 	cmd = exec.Command(tempCommand[0], tempCommand[1:]...)
@@ -94,14 +94,14 @@ func main() {
 			if conf.RepoBranchCheck {
 				reqBody, err := ioutil.ReadAll(req.Body)
 				if err != nil {
-					fmt.Println("Failed to read request body: ", err)
-					fmt.Fprintf(res, "Failed to verify branch")
+					fmt.Println("GoDeploy: Failed to read request body: ", err)
+					fmt.Fprintf(res, "GoDeploy: Failed to verify branch")
 					return
 				}
 				err = json.Unmarshal(reqBody, &git)
 				if err != nil {
-					fmt.Println("Failed to parse request body: ", err)
-					fmt.Fprintf(res, "Failed to verify branch")
+					fmt.Println("GoDeploy: Failed to parse request body: ", err)
+					fmt.Fprintf(res, "GoDeploy: Failed to verify branch")
 					return
 				}
 			}
@@ -109,7 +109,7 @@ func main() {
 			if !conf.RepoBranchCheck || git.Ref == "refs/heads/"+conf.RepoBranch {
 				select {
 				default:
-					fmt.Println("Process still running")
+					fmt.Println("GoDeploy: Process still running")
 					if !conf.ScriptAlwaysWait {
 						err = cmd.Process.Signal(os.Interrupt)
 						if err != nil {
@@ -121,20 +121,20 @@ func main() {
 						fmt.Println(err)
 					}
 					if ps != nil && ps.Exited() {
-						fmt.Println("Process exited")
+						fmt.Println("GoDeploy: Process exited")
 					} else {
-						fmt.Println("Process almost finished or no process state")
+						fmt.Println("GoDeploy: Process almost finished or no process state")
 					}
 					if err = <-errChan; err != nil {
-						fmt.Printf("Process exited: %s", err)
+						fmt.Printf("GoDeploy: Process exited: %s\n", err)
 					} else {
-						fmt.Println("Process exited without error")
+						fmt.Println("GoDeploy: Process exited without error")
 					}
 				case e := <-errChan:
 					if e != nil {
-						fmt.Printf("Process exited: %s", e)
+						fmt.Printf("GoDeploy: Process exited: %s\n", e)
 					} else {
-						fmt.Println("Process exited without error")
+						fmt.Println("GoDeploy: Process exited without error")
 					}
 				}
 
@@ -143,7 +143,7 @@ func main() {
 				cmd.Stderr = os.Stderr
 				err = cmd.Run()
 				if err != nil {
-					fmt.Println("Failed to update the repository", err)
+					fmt.Println("GoDeploy: Failed to update the repository", err)
 				}
 
 				cmd = exec.Command(buildCommand[0], buildCommand[1:]...)
@@ -151,7 +151,7 @@ func main() {
 				cmd.Stderr = os.Stderr
 				err = cmd.Run()
 				if err != nil {
-					fmt.Println("Failed to update the repository", err)
+					fmt.Println("GoDeploy: Failed to build the project", err)
 				}
 
 				cmd = exec.Command(command[0], command[1:]...)
@@ -162,9 +162,9 @@ func main() {
 					errChan <- cmd.Run()
 				}()
 			}
-			fmt.Fprintf(res, "Done")
+			fmt.Fprintf(res, "GoDeploy: Done")
 		} else {
-			fmt.Println("Received ", req.Method, " request on the deployment endpoint")
+			fmt.Println("GoDeploy: Received ", req.Method, " request on the deployment endpoint")
 		}
 	})
 
@@ -174,6 +174,6 @@ func main() {
 		WriteTimeout:   30 * time.Second,
 		MaxHeaderBytes: 1 << 20,
 	}
-	fmt.Println("Listening on port ", conf.ServerPort, " for deployment requests")
-	fmt.Println(s.ListenAndServe())
+	fmt.Println("GoDeploy: Listening on port ", conf.ServerPort, " for deployment requests")
+	fmt.Println("GoDeploy: ", s.ListenAndServe())
 }
