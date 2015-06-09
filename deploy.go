@@ -18,7 +18,7 @@ type Config struct {
 	ServerMethod     string
 	RepoDir          string
 	RepoBranch       string
-	RepoBuildScript    string
+	RepoBuildScript  string
 	RepoRunScript    string
 	RepoSecret       string
 	RepoBranchCheck  bool
@@ -52,15 +52,15 @@ func main() {
 	}
 
 	var updateCommand = "cd " + conf.RepoDir + " && git checkout " + conf.RepoBranch + " && git pull"
-	var buildCommand = filepath.Clean(conf.ScriptDir + "/" + conf.RepoBuildScript)
-	var command = filepath.Clean(conf.ScriptDir + "/" + conf.RepoRunScript)
+	var buildCommand = strings.Fields(filepath.Clean(conf.ScriptDir + "/" + conf.RepoBuildScript))
+	var command = strings.Fields(filepath.Clean(conf.ScriptDir + "/" + conf.RepoRunScript))
 	var errChan = make(chan error)
 
-	var tempCommand string
+	var tempCommand []string
 	if conf.ScriptRunAtStart {
 		tempCommand = command
 	} else {
-		tempCommand = ""
+		tempCommand = []string{""}
 	}
 
 	var cmd = exec.Command("sh", "-c", updateCommand)
@@ -71,7 +71,7 @@ func main() {
 		fmt.Println("Failed to update the repository", err)
 	}
 
-	cmd = exec.Command(buildCommand)
+	cmd = exec.Command(buildCommand[0], buildCommand[1:]...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	err = cmd.Run()
@@ -79,7 +79,7 @@ func main() {
 		fmt.Println("Failed to update the repository", err)
 	}
 
-	cmd = exec.Command(tempCommand)
+	cmd = exec.Command(tempCommand[0], tempCommand[1:]...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
@@ -146,7 +146,7 @@ func main() {
 					fmt.Println("Failed to update the repository", err)
 				}
 
-				cmd = exec.Command(buildCommand)
+				cmd = exec.Command(buildCommand[0], buildCommand[1:]...)
 				cmd.Stdout = os.Stdout
 				cmd.Stderr = os.Stderr
 				err = cmd.Run()
@@ -154,7 +154,7 @@ func main() {
 					fmt.Println("Failed to update the repository", err)
 				}
 
-				cmd = exec.Command(command)
+				cmd = exec.Command(command[0], command[1:]...)
 				cmd.Stdout = os.Stdout
 				cmd.Stderr = os.Stderr
 
