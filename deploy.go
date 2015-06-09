@@ -1,9 +1,14 @@
 package main
 
 import (
+	"crypto/hmac"
+	"crypto/sha1"
+	"crypto/sha256"
+	"crypto/sha512"
 	"encoding/json"
 	"fmt"
 	"github.com/kardianos/osext"
+	"hash"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -22,6 +27,7 @@ type Config struct {
 	RepoBuildScript  string
 	RepoRunScript    string
 	RepoSecret       string
+	RepoSecretAlg    string
 	RepoBranchCheck  bool
 	ScriptDir        string
 	ScriptAlwaysWait bool
@@ -30,6 +36,13 @@ type Config struct {
 
 type GitRes struct {
 	Ref string
+}
+
+func CheckMAC(message, messageMAC, key []byte, hashFunc func() hash.Hash) bool {
+	mac := hmac.New(hashFunc, key)
+	mac.Write(message)
+	expectedMAC := mac.Sum(nil)
+	return hmac.Equal(messageMAC, expectedMAC)
 }
 
 func main() {
@@ -58,6 +71,20 @@ func main() {
 
 	if conf.ScriptDir == "" {
 		conf.ScriptDir = conf.RepoDir
+	}
+
+	var hashFunc func() hash.Hash
+
+	if strings.EqualFold(conf.RepoSecretAlg, "sha512") {
+		hashFunc = sha512.New
+	} else if strings.EqualFold(conf.RepoSecretAlg, "sha256") {
+		hashFunc = sha256.New
+	} else {
+		hashFunc = sha1.New
+	}
+
+	if conf.RepoSecret == "" {
+		conf.RepoSecret = os.Getenv("REPO_SECRET")
 	}
 
 	var updateCommand = "cd " + conf.RepoDir + " && git checkout " + conf.RepoBranch + " && git pull"
@@ -100,18 +127,30 @@ func main() {
 		if strings.EqualFold(req.Method, conf.ServerMethod) {
 			var git GitRes
 
-			if conf.RepoBranchCheck {
+			if conf.RepoBranchCheck || conf.RepoSecret != "" {
 				reqBody, err := ioutil.ReadAll(req.Body)
 				if err != nil {
 					fmt.Println("GoDeploy: Failed to read request body: ", err)
 					fmt.Fprintf(res, "GoDeploy: Failed to verify branch")
 					return
 				}
-				err = json.Unmarshal(reqBody, &git)
-				if err != nil {
-					fmt.Println("GoDeploy: Failed to parse request body: ", err)
-					fmt.Fprintf(res, "GoDeploy: Failed to verify branch")
-					return
+
+				if conf.RepoSecret != "" {
+					fmt.Println("Sha header: ", req.Header)
+					if !CheckMAC(reqBody, req.Header.Get("HTTP_X_HUB_SIGNATURE"), conf.RepoSecret, hashFunc) {
+						fmt.Println("GoDeploy: Failed to verify request origin")
+						fmt.Fprintf(res, "GoDeploy: Failed to verify origin")
+						return
+					}
+				}
+
+				if conf.RepoBranchCheck {
+					err = json.Unmarshal(reqBody, &git)
+					if err != nil {
+						fmt.Println("GoDeploy: Failed to parse request body: ", err)
+						fmt.Fprintf(res, "GoDeploy: Failed to verify branch")
+						return
+					}
 				}
 			}
 
