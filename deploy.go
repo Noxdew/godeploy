@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"time"
 )
 
@@ -19,6 +20,7 @@ type Config struct {
 	RepoRunScript    string
 	RepoSecret       string
 	RepoBranchCheck  bool
+	ScriptDir        string
 	ScriptAlwaysWait bool
 	ScriptRunAtStart bool
 }
@@ -43,7 +45,12 @@ func main() {
 		return
 	}
 
-	var command = "cd " + conf.RepoDir + " && git checkout " + conf.RepoBranch + " && git pull && " + conf.RepoRunScript
+	if conf.ScriptDir == "" {
+		conf.ScriptDir = conf.RepoDir
+	}
+
+	var updateCommand = "cd " + conf.RepoDir + " && git checkout " + conf.RepoBranch + " && git pull"
+	var command = filepath.Clean(conf.ScriptDir + "/" + conf.RepoRunScript)
 	var errChan = make(chan error)
 
 	var tempCommand string
@@ -53,7 +60,15 @@ func main() {
 		tempCommand = ""
 	}
 
-	var cmd = exec.Command("sh", "-c", tempCommand)
+	var cmd = exec.Command("sh", "-c", updateCommand)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err = cmd.Run()
+	if err != nil {
+		fmt.Println("Failed to update the repository", err)
+	}
+
+	cmd = exec.Command(tempCommand)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
@@ -81,9 +96,11 @@ func main() {
 			}
 
 			if !conf.RepoBranchCheck || git.Ref == "refs/heads/"+conf.RepoBranch {
-				err = cmd.Process.Kill()
-				if err != nil {
-					fmt.Println(err)
+				if !conf.ScriptAlwaysWait {
+					err = cmd.Process.Signal(os.Interrupt)
+					if err != nil {
+						fmt.Println(err)
+					}
 				}
 				ps, err := cmd.Process.Wait()
 				if err != nil {
@@ -92,7 +109,7 @@ func main() {
 				if ps != nil && ps.Exited() {
 					fmt.Println("Process exited")
 				} else {
-					fmt.Println("Process still running")
+					fmt.Println("Process almost finished or no process state")
 				}
 				select {
 				default:
@@ -105,7 +122,15 @@ func main() {
 					}
 				}
 
-				cmd = exec.Command("sh", "-c", command)
+				cmd = exec.Command("sh", "-c", updateCommand)
+				cmd.Stdout = os.Stdout
+				cmd.Stderr = os.Stderr
+				err = cmd.Run()
+				if err != nil {
+					fmt.Println("Failed to update the repository", err)
+				}
+
+				cmd = exec.Command(command)
 				cmd.Stdout = os.Stdout
 				cmd.Stderr = os.Stderr
 
