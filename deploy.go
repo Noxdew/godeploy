@@ -28,6 +28,8 @@ type Config struct {
 	RepoRunScript    string
 	RepoSecret       string
 	RepoSecretAlg    string
+	RepoSecretHeader string
+	RepoSecretPrefix bool
 	RepoBranchCheck  bool
 	ScriptDir        string
 	ScriptAlwaysWait bool
@@ -137,7 +139,12 @@ func main() {
 
 				if conf.RepoSecret != "" {
 					fmt.Println("Sha header: ", req.Header)
-					if !CheckMAC(reqBody, req.Header.Get("HTTP_X_HUB_SIGNATURE"), conf.RepoSecret, hashFunc) {
+					hashed := req.Header.Get(conf.Header)
+					if conf.RepoSecretPrefix {
+						spliced := strings.Split(hashed, "=")
+						hashed = spliced[len(spliced) - 1]
+					}
+					if !CheckMAC(reqBody, hashed, conf.RepoSecret, hashFunc) {
 						fmt.Println("GoDeploy: Failed to verify request origin")
 						fmt.Fprintf(res, "GoDeploy: Failed to verify origin")
 						return
