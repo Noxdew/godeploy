@@ -139,12 +139,12 @@ func main() {
 
 				if conf.RepoSecret != "" {
 					fmt.Println("Sha header: ", req.Header)
-					hashed := req.Header.Get(conf.Header)
+					hashed := req.Header.Get(conf.RepoSecretHeader)
 					if conf.RepoSecretPrefix {
 						spliced := strings.Split(hashed, "=")
-						hashed = spliced[len(spliced) - 1]
+						hashed = spliced[len(spliced)-1]
 					}
-					if !CheckMAC(reqBody, hashed, conf.RepoSecret, hashFunc) {
+					if !CheckMAC(reqBody, []byte(hashed), []byte(conf.RepoSecret), hashFunc) {
 						fmt.Println("GoDeploy: Failed to verify request origin")
 						fmt.Fprintf(res, "GoDeploy: Failed to verify origin")
 						return
