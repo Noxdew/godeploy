@@ -1,3 +1,4 @@
+[![Circle CI](https://circleci.com/gh/morwoen/godeploy.svg?style=svg)](https://circleci.com/gh/morwoen/godeploy)
 # GoDeploy
 A simple to use tool for automatic deployment of projects.
 
@@ -65,4 +66,5 @@ NOTE: The config file must be in either the folder with the executable or the cu
 2. Make the update script configurable so that it can be used with non-git repos
 3. Add option for https
 4. Remember to restart the script when `"ScriptAlwaysWait": true`
+5. Testing
 
