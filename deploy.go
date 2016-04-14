@@ -173,16 +173,17 @@ func main() {
 					ps, err := cmd.Process.Wait()
 					if err != nil {
 						fmt.Println(err)
-					}
-					if ps != nil && ps.Exited() {
-						fmt.Println("GoDeploy: Process exited")
 					} else {
-						fmt.Println("GoDeploy: Process almost finished or no process state")
-					}
-					if err = <-errChan; err != nil {
-						fmt.Printf("GoDeploy: Process exited: %s\n", err)
-					} else {
-						fmt.Println("GoDeploy: Process exited without error")
+						if ps != nil && ps.Exited() {
+							fmt.Println("GoDeploy: Process exited")
+						} else {
+							fmt.Println("GoDeploy: Process almost finished or no process state")
+						}
+						if err = <-errChan; err != nil {
+							fmt.Printf("GoDeploy: Process exited: %s\n", err)
+						} else {
+							fmt.Println("GoDeploy: Process exited without error")
+						}
 					}
 				case e := <-errChan:
 					if e != nil {
