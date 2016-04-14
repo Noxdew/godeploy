@@ -161,6 +161,23 @@ func main() {
 			}
 
 			if !conf.RepoBranchCheck || correctBranch {
+
+				var temoCmd = exec.Command("sh", "-c", updateCommand)
+				temoCmd.Stdout = os.Stdout
+				temoCmd.Stderr = os.Stderr
+				err = temoCmd.Run()
+				if err != nil {
+					fmt.Println("GoDeploy: Failed to update the repository", err)
+				}
+
+				temoCmd = exec.Command(buildCommand[0], buildCommand[1:]...)
+				temoCmd.Stdout = os.Stdout
+				temoCmd.Stderr = os.Stderr
+				err = temoCmd.Run()
+				if err != nil {
+					fmt.Println("GoDeploy: Failed to build the project", err)
+				}
+
 				select {
 				default:
 					fmt.Println("GoDeploy: Process still running")
@@ -190,22 +207,6 @@ func main() {
 					} else {
 						fmt.Println("GoDeploy: Process exited without error")
 					}
-				}
-
-				cmd = exec.Command("sh", "-c", updateCommand)
-				cmd.Stdout = os.Stdout
-				cmd.Stderr = os.Stderr
-				err = cmd.Run()
-				if err != nil {
-					fmt.Println("GoDeploy: Failed to update the repository", err)
-				}
-
-				cmd = exec.Command(buildCommand[0], buildCommand[1:]...)
-				cmd.Stdout = os.Stdout
-				cmd.Stderr = os.Stderr
-				err = cmd.Run()
-				if err != nil {
-					fmt.Println("GoDeploy: Failed to build the project", err)
 				}
 
 				cmd = exec.Command(command[0], command[1:]...)
