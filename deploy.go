@@ -7,7 +7,7 @@ import (
 	"crypto/sha512"
 	"encoding/json"
 	"fmt"
-	"github.com/kardianos/osext"
+	// "github.com/kardianos/osext"
 	"hash"
 	"io/ioutil"
 	"net/http"
@@ -49,7 +49,7 @@ func CheckMAC(message, messageMAC, key []byte, hashFunc func() hash.Hash) bool {
 
 func main() {
 
-	execFolder, err := osext.ExecutableFolder()
+	execFolder, err := os.Getwd()
 	if err != nil {
 		fmt.Println("GoDeploy: Failed to get the executable path")
 	}
