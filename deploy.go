@@ -125,7 +125,8 @@ func main() {
 
 	http.HandleFunc("/"+conf.ServerEndpoint, func(res http.ResponseWriter, req *http.Request) {
 		if strings.EqualFold(req.Method, conf.ServerMethod) {
-			var git GitRes
+			// var git GitRes
+			var reqBody = []byte("")
 
 			if conf.RepoBranchCheck || conf.RepoSecret != "" {
 				reqBody, err := ioutil.ReadAll(req.Body)
@@ -149,17 +150,17 @@ func main() {
 					}
 				}
 
-				if conf.RepoBranchCheck {
-					err = json.Unmarshal(reqBody, &git)
-					if err != nil {
-						fmt.Println("GoDeploy: Failed to parse request body: ", err)
-						fmt.Fprintf(res, "GoDeploy: Failed to verify branch")
-						return
-					}
-				}
+				// if conf.RepoBranchCheck {
+				// 	err = json.Unmarshal(reqBody, &git)
+				// 	if err != nil {
+				// 		fmt.Println("GoDeploy: Failed to parse request body: ", err)
+				// 		fmt.Fprintf(res, "GoDeploy: Failed to verify branch")
+				// 		return
+				// 	}
+				// }
 			}
 
-			if !conf.RepoBranchCheck || git.Ref == "refs/heads/"+conf.RepoBranch {
+			if !conf.RepoBranchCheck || strings.Contains(string(reqBody), conf.RepoBranch) {
 				select {
 				default:
 					fmt.Println("GoDeploy: Process still running")
@@ -191,6 +192,7 @@ func main() {
 					}
 				}
 
+				var cmd = exec.Command("sh", "-c", updateCommand)
 				cmd = exec.Command("sh", "-c", updateCommand)
 				cmd.Stdout = os.Stdout
 				cmd.Stderr = os.Stderr
@@ -214,6 +216,8 @@ func main() {
 				go func() {
 					errChan <- cmd.Run()
 				}()
+			} else {
+				fmt.Println("GoDeploy: Push to different branch")
 			}
 			fmt.Fprintf(res, "GoDeploy: Done")
 		} else {
