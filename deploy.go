@@ -7,7 +7,6 @@ import (
 	"crypto/sha512"
 	"encoding/json"
 	"fmt"
-	// "github.com/kardianos/osext"
 	"hash"
 	"io/ioutil"
 	"net/http"
@@ -22,7 +21,6 @@ type Config struct {
 	ServerEndpoint   string
 	ServerPort       string
 	ServerMethod     string
-	RepoDir          string
 	RepoBranch       string
 	RepoBuildScript  string
 	RepoRunScript    string
@@ -72,7 +70,7 @@ func main() {
 	}
 
 	if conf.ScriptDir == "" {
-		conf.ScriptDir = conf.RepoDir
+		conf.ScriptDir = execFolder
 	}
 
 	var hashFunc func() hash.Hash
@@ -89,7 +87,7 @@ func main() {
 		conf.RepoSecret = os.Getenv("REPO_SECRET")
 	}
 
-	var updateCommand = "cd " + conf.RepoDir + " && git checkout " + conf.RepoBranch + " && git pull"
+	var updateCommand = "cd " + execFolder + " && git checkout " + conf.RepoBranch + " && git pull"
 	var buildCommand = strings.Fields(filepath.Clean(conf.ScriptDir + "/" + conf.RepoBuildScript))
 	var command = strings.Fields(filepath.Clean(conf.ScriptDir + "/" + conf.RepoRunScript))
 	var errChan = make(chan error)
