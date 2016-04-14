@@ -8,7 +8,6 @@ The configuration is as follows:
 	"ServerEndpoint": "deploy",
 	"ServerPort": "1313",
 	"ServerMethod": "POST",
-	"RepoDir": ".",
 	"RepoBranch": "master",
 	"RepoBranchCheck": true,
 	"RepoBuildScript": "",
@@ -29,8 +28,6 @@ The configuration is as follows:
 
 `ServerMethod`: The method it should listen for. The default for GitHub is POST.
 
-`RepoDir`: The directory of the repository. Can be anything inside the git repository and **must** be the location where the build script should run. Can be relative, but use absolute to make sure it works as expected.
-
 `RepoBranch`: The name of the git repository's branch it should deploy
 
 `RepoBranchCheck`: Whether it should check that the request body has `"ref": "refs/heads/{branchname}"`
@@ -45,7 +42,7 @@ The configuration is as follows:
 
 `RepoSecretHeader`: The name of the header containing the hash of the body.
 
-`RepoSecretPrefix`: Whether there is a prefix in front of the hash. In GitHub there is a prefix (`sha1=`) 
+`RepoSecretPrefix`: Whether there is a prefix in front of the hash. In GitHub there is a prefix (`sha1=`)
 
 `ScriptDir`: The directory for the run script. They are joined at run time. Example: `/home/project/bin` with run script `../run.sh` will execute `/home/project/run.sh`
 
@@ -56,15 +53,8 @@ The configuration is as follows:
 
 NOTE: The config file must be in either the folder with the executable or the current folder you are running the application with
 
-
-# Dependencies
-[kardianos/osext] (https://github.com/kardianos/osext) is used to find the executable's directory to look for the config
-
-
 # TODO
-1. Add option for automatic testing before deployment (also deploy regardless of test result)
-2. Make the update script configurable so that it can be used with non-git repos
-3. Add option for https
-4. Remember to restart the script when `"ScriptAlwaysWait": true`
-5. Testing
-
+1. Make the update script configurable so that it can be used with non-git repos
+2. Add option for https
+3. Remember to restart the script when `"ScriptAlwaysWait": true`
+4. Testing

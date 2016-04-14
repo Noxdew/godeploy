@@ -126,8 +126,7 @@ func main() {
 	http.HandleFunc("/"+conf.ServerEndpoint, func(res http.ResponseWriter, req *http.Request) {
 		if strings.EqualFold(req.Method, conf.ServerMethod) {
 			// var git GitRes
-			var reqBody = []byte("")
-
+			var correctBranch = false
 			if conf.RepoBranchCheck || conf.RepoSecret != "" {
 				reqBody, err := ioutil.ReadAll(req.Body)
 				if err != nil {
@@ -158,9 +157,10 @@ func main() {
 				// 		return
 				// 	}
 				// }
+				correctBranch = strings.Contains(string(reqBody), "\"" + conf.RepoBranch + "\"")
 			}
 
-			if !conf.RepoBranchCheck || strings.Contains(string(reqBody), conf.RepoBranch) {
+			if !conf.RepoBranchCheck || correctBranch {
 				select {
 				default:
 					fmt.Println("GoDeploy: Process still running")
