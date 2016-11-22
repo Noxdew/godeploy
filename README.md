@@ -1,7 +1,14 @@
 [![Circle CI](https://circleci.com/gh/morwoen/godeploy.svg?style=svg)](https://circleci.com/gh/morwoen/godeploy)
 # GoDeploy
-A simple to use tool for automatic deployment of projects.
+Automated deployment tool in GoLang. The simplest way to deploy to your server.
 
+## Build and Install
+
+1. Simply `go build` and then `./deploy` you application. Make sure you have the configuration file in the current working directory or next to the executable. 
+2. Never ssh to your server again :wink: 
+3. Go back to the fun development
+
+## Configuration
 The configuration is as follows:
 ```json
 {
@@ -51,9 +58,12 @@ The configuration is as follows:
 `ScriptRunAtStart`: Whether to start the project when you start GoDeploy.
 
 
-NOTE: The config file must be in either the folder with the executable or the current folder you are running the application with
+**NOTE**: The config file must be in either the folder with the executable or the current folder you are running the application with
 
-# TODO
+## Ideas and Contributions
+are always welcome :heart:
+
+### TODO
 1. Make the update script configurable so that it can be used with non-git repos
 2. Add option for https
 3. Remember to restart the script when `"ScriptAlwaysWait": true`
